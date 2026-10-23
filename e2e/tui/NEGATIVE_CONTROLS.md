@@ -8834,3 +8834,20 @@ Without the fix, the inputs opened by a prefix chord (window and workspace renam
 | The drop for anything else that owns the keyboard: `pasteTakenByOverlay` ends with the overlays it named before instead of `OverlayOwnsKeyboard` | `help_list_drops_it` ("a paste into the help's list reached the pane, which shows \"hl1\"") | **caught** |
 
 Not covered end to end: the other one-line fields `textFieldPaste` lists (launcher, workspace switcher, aggregate view, keybind manager filter, theme picker and editor, glyph, effect and layout pickers, host picker, settings inline edit, file and worktree dialogs, tape name, accent hex, scrollback browser and copy-mode search), and the paste key in any field but the rename.
+## wait-for window-output --new ignores old output
+
+`TestWaitForWindowOutputNewIgnoresOldOutput` prints `DONE-7` in a pane and
+proves it is on the screen with a plain wait. The negative half: a `--new`
+wait for the same pattern must time out. The positive half: a `--new` wait
+started before the pane prints `DONE-7` again must match, and its JSON must
+carry `"new": true`.
+
+Run on 2026-10-24 on Linux amd64, two runs of each binary.
+
+| Control | How | Result | Verdict |
+| --- | --- | --- | --- |
+| origin/main | binary built from origin/main | 2 runs of 2 fail: "unknown flag: --new" | **caught** |
+| new is ignored | `if fresh {` made `if fresh && false {` in `waitWindowOutput`, restored after, checked with sha256 | 2 runs of 2 fail: "wait-for --new matched the marker that was already on the screen after 3.7ms" | **caught** |
+
+With the change in place the test passes. The same cut binary also showed
+the stale-daemon warning, because the result no longer carries `new`.
