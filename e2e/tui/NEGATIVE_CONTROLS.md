@@ -8834,3 +8834,20 @@ Without the fix, the inputs opened by a prefix chord (window and workspace renam
 | The drop for anything else that owns the keyboard: `pasteTakenByOverlay` ends with the overlays it named before instead of `OverlayOwnsKeyboard` | `help_list_drops_it` ("a paste into the help's list reached the pane, which shows \"hl1\"") | **caught** |
 
 Not covered end to end: the other one-line fields `textFieldPaste` lists (launcher, workspace switcher, aggregate view, keybind manager filter, theme picker and editor, glyph, effect and layout pickers, host picker, settings inline edit, file and worktree dialogs, tape name, accent hex, scrollback browser and copy-mode search), and the paste key in any field but the rename.
+## Typing from a pane: -w required, and no typing into a prompt
+
+`TestAPaneTypesOnlyWhereItAimsAndNotIntoAPrompt` runs a probe pane that holds
+admin and respond. It calls `send-text` and `send-keys` with no `-w`, and
+`send-text`, `send-keys` and `paste-buffer` into a pane on `needs_input`
+without `--allow-blocked`. The
+positive halves are in the same fixture: the same call with `-w` reaches a
+plain pane, `send-text --allow-blocked` reaches the waiting pane, and the
+person's `send-text`, from outside every pane, reaches it too.
+`TestAPaneCannotMarkAnotherPaneToAnswerItsPrompt` now checks that a pane with
+respond is refused without `--allow-blocked` and answers the prompt with it.
+Run on 2026-10-24 against a build of origin/main (c5e6439de).
+
+| Bug | Fix removed | How | Tests that fail | Verdict |
+|---|---|---|---|---|
+| A pane's `send-text` and `send-keys` without `-w` typed into the person's focused pane | `typingNeedsWindow` | Build of origin/main | `TestAPaneTypesOnlyWhereItAimsAndNotIntoAPrompt` ("a call without -w typed into the focused pane": `NOWIN_TEXTNOWIN` in the plain pane) | **caught** |
+| A pane with respond typed into a pane on needs_input with no sign it read the prompt | `typingBlocked` | Build of origin/main | `TestAPaneTypesOnlyWhereItAimsAndNotIntoAPrompt` (`REFUSED_TEXT`, `QZ` and `BUFFER_TEXT` in the waiting pane's log), `TestAPaneCannotMarkAnotherPaneToAnswerItsPrompt` (`SK3_EXIT=0`, `ANSWERED:y`) | **caught** |
